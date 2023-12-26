@@ -6,9 +6,6 @@ import { getAuth } from 'firebase/auth';
 import { generateUniqueRandomName } from '../util/Algorithms';
 import { uploadBytes } from 'firebase/storage';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { fetchUser, fetchUserPosts } from '../../redux/actions';
 
 const Save = ({navigation, route, fetchUserPosts}) => {
     const [caption, setCaption] = useState('');
@@ -41,7 +38,6 @@ const Save = ({navigation, route, fetchUserPosts}) => {
 
     const uploadImageSavePostAndPopToTop = async () => {
         await uploadImageAndSavePost();
-        fetchUserPosts();
         navigation.popToTop();
     };
 
@@ -68,10 +64,4 @@ const Save = ({navigation, route, fetchUserPosts}) => {
     );
 }
 
-const mapDispatchProps = (dispatch) => bindActionCreators({fetchUser, fetchUserPosts}, dispatch);
-
-const mapStateToProps = (store) => ({
-    currentUser: store.userState.currentUser
-});
-
-export default connect(mapStateToProps, mapDispatchProps)(Save);
+export default Save;

@@ -1,7 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { fetchUser, fetchUserPosts } from '../redux/actions';
+import { 
+    fetchUser, 
+    fetchUserPosts, 
+    fetchFollowingUsers, 
+    clearData 
+} from '../redux/actions';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import FeedScreen from './main/Feed';
 import SearchScreen from './main/Search';
@@ -15,8 +20,10 @@ const EmptyScreen = () => null;
 
 export class Main extends Component {
     componentDidMount() {
+        this.props.clearData();
         this.props.fetchUser();
         this.props.fetchUserPosts();
+        this.props.fetchFollowingUsers();
     }
 
     render() {
@@ -84,9 +91,14 @@ export class Main extends Component {
     }
 }
 
-const mapDispatchProps = (dispatch) => bindActionCreators({fetchUser, fetchUserPosts}, dispatch);
+const mapDispatchProps = dispatch => bindActionCreators({
+    clearData,
+    fetchUser, 
+    fetchUserPosts, 
+    fetchFollowingUsers
+}, dispatch);
 
-const mapStateToProps = (store) => ({
+const mapStateToProps = store => ({
     currentUser: store.userState.currentUser
 });
 

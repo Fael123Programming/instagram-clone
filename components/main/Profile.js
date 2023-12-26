@@ -5,21 +5,31 @@ import {
     Image,
     FlatList,
     StyleSheet,
-    Pressable,
-    Alert
+    Alert,
+    Button
 } from 'react-native';
 import { connect } from 'react-redux';
 import { getAuth, signOut } from 'firebase/auth';
 import { firestore } from '../../firebaseConfig';
-import { doc, getDoc, getDocs, query, collection, orderBy } from 'firebase/firestore';
+import { 
+  doc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  collection, 
+  orderBy, 
+  deleteDoc, 
+  setDoc 
+} from 'firebase/firestore';
 
 const Profile = (props) => {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  
+  const [following, setFollowing] = useState(false);
+
   useEffect(() => {
     const uid = props.route.params.uid;
-    if (uid == getAuth().currentUser.uid) {
+    if (uid === getAuth().currentUser.uid) {
       setUser(props.currentUser);
       setPosts(props.posts);
     } else {
@@ -44,16 +54,21 @@ const Profile = (props) => {
               });
               setPosts(posts);
           } else {
-              console.log('There are not any post for the current user');
+              console.log('There are no posts for the current user');
           }
       });
     }
-  }, [props.route.params.uid]);
+    if (props.following.indexOf(props.route.params.uid) !== -1) {
+      setFollowing(true);
+    } else {
+      setFollowing(false);
+    }
+  }, [props.route.params.uid, props.following, props.posts]);
 
   const renderItem = ({item}) => (
     <View style={styles.postImageContainer}>
       <Image
-        source={{uri: item.imageURL}}
+        source={{uri: item?.imageURL}}
         style={styles.postImage}
       />
     </View>
@@ -73,24 +88,57 @@ const Profile = (props) => {
     );
   };
 
-  const doSignOut = async () => {
+  const doSignOut = async _ => {
     await signOut(getAuth());
+  };
+
+  const handleFollow = async _ => {
+    if (!following) {
+      await addFollowingDoc();
+    } else {
+      await deleteFollowingDoc();
+    }
+    setFollowing(!following);
+  };
+
+  const addFollowingDoc = async _ => {
+    const followingDoc = doc(firestore, 'following', getAuth().currentUser.uid, 'userFollowing', props.route.params.uid);
+    await setDoc(followingDoc, {});
+  };
+
+  const deleteFollowingDoc = async _ => {
+    const followingDoc = doc(firestore, 'following', getAuth().currentUser.uid, 'userFollowing', props.route.params.uid);
+    await deleteDoc(followingDoc);
   };
 
   return (
     <View style={styles.container}>
-      <View style={[styles.userInfoContainer, {flexDirection: 'row'}]}>
-        <View style={{flex: 1}}>
-          <Text>{user?.name}</Text>
-          <Text>{user?.email}</Text>
-        </View>
-        <View style={{flex: 1}}>
-          <Pressable
-            onPress={askSignOut}
-          >
-            <Text>Logout</Text>
-          </Pressable>
-        </View>
+        <View>
+          <View>
+            <Text>{user?.name}</Text>
+          </View>
+          <View>
+            <Text>{user?.email}</Text>
+          </View>
+          {
+            props.route.params.uid !== getAuth().currentUser.uid ? (
+              <View>
+                <Button
+                  title={following ? 'Following' : 'Follow'}
+                  onPress={handleFollow}
+                  color={following ? 'grey' : 'blue'}
+                />
+              </View>
+            ) : (
+              <View>
+                <Button
+                  title='Logout'
+                  onPress={askSignOut}
+                  color={'red'}
+                />
+              </View>
+            )
+          }
       </View>
       <View style={styles.postsContainer}>
         <FlatList
@@ -107,7 +155,8 @@ const Profile = (props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 40
+    marginTop: 40,
+    margin: 5
   },
   userInfoContainer: {
     margin: 20
@@ -127,7 +176,8 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = store => ({
   currentUser: store.userState.currentUser,
-  posts: store.userState.posts
+  posts: store.userState.posts,
+  following: store.userState.following
 });
 
 export default connect(mapStateToProps, null)(Profile);

@@ -5,17 +5,17 @@ import {
     Image,
     FlatList,
     StyleSheet,
-    Pressable,
 } from 'react-native';
 import { connect } from 'react-redux';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import PressableIcon from '../util/PressableIcon';
+import LikePressableIcon from '../util/LikePressableIcon';
 
 const Feed = props => {
   const [posts, setPosts] = useState([]);
   
   useEffect(() => {
     let posts = [];
-    if (props.usersLoaded === props.following.length) {
+    if (props.usersFollowingLoaded === props.following.length) {
       for (let i = 0; i < props.following.length; i++) {
         const user = props.users.find(el => el.uid === props.following[i]);
         if (user != undefined) {
@@ -25,7 +25,7 @@ const Feed = props => {
       posts.sort((x, y) => x.creationTimestamp - y.creationTimestamp);
       setPosts(posts);
     }
-  }, [props.usersLoaded]);
+  }, [props.usersFollowingLoaded]);
   
   const renderItem = ({item}) => {
     return <View style={styles.postContainer}>
@@ -40,14 +40,21 @@ const Feed = props => {
         source={{uri: item.imageURL}}
         style={styles.postImage}
       />
-      <Pressable
-        onPress={() => props.navigation.navigate('Comment', {
-          postId: item.id,
-          uid: item.user.uid
-        })}
-      >
-        <MaterialCommunityIcons name={'comment-outline'} color={'blue'} size={26}/>
-      </Pressable>
+      <View
+       style={{flex: 1, flexDirection: 'row', padding: 5}}>
+        <LikePressableIcon
+          liked={false}
+        />
+        <PressableIcon
+          icon={'comment-outline'}
+          iconPressed={'comment'}
+          color={'blue'}
+          onPress={() => props.navigation.navigate('Comment', {
+            postId: item.id,
+            uid: item.user.uid
+          })}
+        />
+      </View>
     </View>
   };
 
@@ -104,7 +111,7 @@ const mapStateToProps = store => ({
   currentUser: store.userState.currentUser,
   following: store.userState.following,
   users: store.usersState.users,
-  usersLoaded: store.usersState.usersLoaded
+  usersFollowingLoaded: store.usersState.usersFollowingLoaded
 });
 
 export default connect(mapStateToProps, null)(Feed);

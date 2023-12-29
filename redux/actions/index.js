@@ -42,7 +42,7 @@ export function fetchUserPosts() {
                 return {id, ...data};
             });
             dispatch({type: USER_POSTS_STATE_CHANGE, posts});
-        })
+        });
         // getDocs(theQuery)
         //     .then(snapshot => {
         //         if (!snapshot.empty) {
@@ -71,7 +71,7 @@ export function fetchFollowingUsers() {
     };
 }
 
-export function fetchUsersData(uid) {
+export function fetchUsersData(uid, shouldGetUserPosts=true) {
     return (dispatch, getState) => {
         const found = getState().usersState.users.some(el => el.uid === uid);
         if (!found) {
@@ -82,9 +82,11 @@ export function fetchUsersData(uid) {
                         const user = snapshot.data();
                         user.uid = snapshot.id;
                         dispatch({type: USERS_STATE_CHANGE, user});
-                        dispatch(fetchUsersFollowingPosts(uid));
                     }
                 });
+            if (shouldGetUserPosts) {
+                dispatch(fetchUsersFollowingPosts(uid));
+            }
         }
     };
 }

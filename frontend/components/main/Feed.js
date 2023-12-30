@@ -14,48 +14,52 @@ const Feed = props => {
   const [posts, setPosts] = useState([]);
   
   useEffect(() => {
-    let posts = [];
-    if (props.usersFollowingLoaded === props.following.length) {
-      for (let i = 0; i < props.following.length; i++) {
-        const user = props.users.find(el => el.uid === props.following[i]);
-        if (user != undefined) {
-          posts = [...posts, ...user.posts];
-        }
-      }
-      posts.sort((x, y) => x.creationTimestamp - y.creationTimestamp);
-      setPosts(posts);
+    if (props.usersFollowingLoaded === props.following.length && props.following.length !== 0) {
+      props.feed.sort((x, y) => x.creationTimestamp - y.creationTimestamp);
+      setPosts(props.feed);
     }
-  }, [props.usersFollowingLoaded]);
-  
+  }, [props.usersFollowingLoaded, props.feed]);
+
+  if (posts == undefined) {
+    return null;
+  }
+
   const renderItem = ({item}) => {
-    return <View style={styles.postContainer}>
-      <View style={styles.postUserImageContainer}>
+    if (item.currentUserLike == undefined) {
+      return null;
+    }
+    return (
+      <View style={styles.postContainer}>
+        <View style={styles.postUserImageContainer}>
+          <Image
+            source={require('../../assets/unknown-user.png')}
+            style={styles.postUserImage}
+          />
+          <Text style={styles.authorName}>{item.user.name}</Text>
+        </View>
         <Image
-          source={require('../../assets/unknown-user.png')}
-          style={styles.postUserImage}
+          source={{uri: item.imageURL}}
+          style={styles.postImage}
         />
-        <Text style={styles.authorName}>{item.user.name}</Text>
+        <View
+        style={{flex: 1, flexDirection: 'row', padding: 5}}>
+          <LikePressableIcon
+            liked={item.currentUserLike}
+            uid={item.user.uid}
+            postId={item.id}
+          />
+          <PressableIcon
+            icon={'comment-outline'}
+            iconPressed={'comment'}
+            color={'blue'}
+            onPress={() => props.navigation.navigate('Comment', {
+              postId: item.id,
+              uid: item.user.uid
+            })}
+          />
+        </View>
       </View>
-      <Image
-        source={{uri: item.imageURL}}
-        style={styles.postImage}
-      />
-      <View
-       style={{flex: 1, flexDirection: 'row', padding: 5}}>
-        <LikePressableIcon
-          liked={false}
-        />
-        <PressableIcon
-          icon={'comment-outline'}
-          iconPressed={'comment'}
-          color={'blue'}
-          onPress={() => props.navigation.navigate('Comment', {
-            postId: item.id,
-            uid: item.user.uid
-          })}
-        />
-      </View>
-    </View>
+    );
   };
 
   return (
@@ -110,7 +114,7 @@ const styles = StyleSheet.create({
 const mapStateToProps = store => ({
   currentUser: store.userState.currentUser,
   following: store.userState.following,
-  users: store.usersState.users,
+  feed: store.usersState.feed,
   usersFollowingLoaded: store.usersState.usersFollowingLoaded
 });
 

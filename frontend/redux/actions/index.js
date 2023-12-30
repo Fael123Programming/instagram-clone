@@ -13,7 +13,8 @@ import {
     USER_STATE_CHANGE, 
     USERS_STATE_CHANGE, 
     USER_POSTS_STATE_CHANGE,
-    USERS_POSTS_STATE_CHANGE, 
+    USERS_POSTS_STATE_CHANGE,
+    USERS_LIKES_STATE_CHANGE,
     FOLLOWING_USERS_STATE_CHANGE,
     CLEAR_DATA
 } from "../constants";
@@ -43,17 +44,6 @@ export function fetchUserPosts() {
             });
             dispatch({type: USER_POSTS_STATE_CHANGE, posts});
         });
-        // getDocs(theQuery)
-        //     .then(snapshot => {
-        //         if (!snapshot.empty) {
-        //             const posts = snapshot.docs.map(doc => {
-        //                 const data = doc.data();
-        //                 const id = doc.id;
-        //                 return {id, ...data};
-        //             });
-        //             dispatch({type: USER_POSTS_STATE_CHANGE, posts});
-        //         }
-        //     });
     };
 }
 
@@ -104,9 +94,26 @@ export function fetchUsersFollowingPosts(uid) {
                         const id = doc.id;
                         return {id, ...data, user};
                     });
+                    for (let i = 0; i < posts.length; i++) {
+                        dispatch(fetchUsersFollowingLikes(uid, posts[i].id));
+                    }
                     dispatch({type: USERS_POSTS_STATE_CHANGE, posts, uid});
                 }
             });
+    };
+}
+
+export function fetchUsersFollowingLikes(uid, postId) {
+    return (dispatch, getState) => {
+        const userDoc = doc(firestore, 'posts', uid, 'userPosts', postId, 'likes', getAuth().currentUser.uid);
+        const theQuery = query(userDoc);
+        onSnapshot(userDoc, snapshot => {
+            let currentUserLike = false;
+            if (snapshot.exists()) {
+                currentUserLike = true;
+            }
+            dispatch({type: USERS_LIKES_STATE_CHANGE, postId, currentUserLike})
+        });
     };
 }
 
